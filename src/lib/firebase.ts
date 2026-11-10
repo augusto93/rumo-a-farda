@@ -9,4 +9,4 @@ export const firebaseConfig = {
 };
 export const firebaseEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
 
-export interface CloudUser { uid: string; displayName: string | null; photoURL: string | null }
+export interface CloudUser { uid: string; displayName: string | null; email: string | null; photoURL: string | null }

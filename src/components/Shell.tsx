@@ -15,7 +15,9 @@ const NAV = [
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
-  const { state, user, cloud, syncing, login, logout } = useStore();
+  const { state, user, cloud, syncing, authReady, logout } = useStore();
+  // A tela de login é independente: sem menu lateral nem barra inferior.
+  if (path === "/entrar") return <main className="auth-page">{children}</main>;
   const active = (h: string) => (h === "/" ? path === "/" : path.startsWith(h));
   const links = NAV.map(n => (
     <Link key={n.href} href={n.href} aria-current={active(n.href) ? "page" : undefined}>
@@ -38,17 +40,17 @@ export function Shell({ children }: { children: ReactNode }) {
               <>
                 <div className="row" style={{ gap: 8 }}>
                   {user.photoURL && <img src={user.photoURL} alt="" referrerPolicy="no-referrer" />}
-                  <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{user.displayName}</span>
+                  <Link href="/entrar" style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{user.displayName || user.email}</Link>
                 </div>
                 <span className="sync">{syncing ? "Sincronizando…" : "Progresso salvo na nuvem"}</span>
                 <button className="btn ghost" style={{ minHeight: 34, padding: "4px 8px" }} onClick={logout}>Sair</button>
               </>
-            ) : (
+            ) : authReady ? (
               <>
-                <span>Entre para salvar seu progresso no celular e no computador.</span>
-                <button className="btn" onClick={login}>Entrar com Google</button>
+                <span>Crie sua conta para salvar o progresso no celular e no computador.</span>
+                <Link className="btn" href="/entrar">Entrar ou cadastrar</Link>
               </>
-            )
+            ) : null
           ) : (
             <span>Progresso salvo neste aparelho.</span>
           )}
@@ -61,15 +63,15 @@ export function Shell({ children }: { children: ReactNode }) {
 }
 
 export function MobileTop({ title }: { title: string }) {
-  const { state, user, cloud, login } = useStore();
+  const { state, user, cloud, authReady } = useStore();
   return (
     <div className="mtop">
       <div className="row" style={{ gap: 10 }}>
         <div className="brand-mark" aria-hidden="true"><Icon.shield size={18} /></div>
         <b style={{ fontFamily: "var(--font-display)" }}>{title}</b>
       </div>
-      {cloud && !user
-        ? <button className="chip" style={{ border: 0, cursor: "pointer" }} onClick={login}>Entrar</button>
+      {cloud && authReady && !user
+        ? <Link className="chip" href="/entrar">Entrar</Link>
         : <span className="chip">{TARGETS[state.target].short}</span>}
     </div>
   );

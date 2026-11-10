@@ -35,7 +35,9 @@ type Ctx = {
   user: CloudUser | null;
   cloud: boolean;
   syncing: boolean;
-  login: () => Promise<void>;
+  /** carregado o estado de login (evita piscar "Entrar" para quem já está logado) */
+  authReady: boolean;
+  auth: () => Promise<Client>;
   logout: () => Promise<void>;
   reset: () => void;
 };
@@ -46,6 +48,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<CloudUser | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [authReady, setAuthReady] = useState(!firebaseEnabled);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userRef = useRef<CloudUser | null>(null);
 
@@ -66,7 +69,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!firebaseEnabled) return;
     let off: (() => void) | undefined, alive = true;
     client().then(c => { if (!alive) return; off = c.watchUser(async u => {
-      setUser(u); userRef.current = u;
+      setUser(u); userRef.current = u; setAuthReady(true);
       if (!u) return;
       setSyncing(true);
       try {
@@ -92,15 +95,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, [pushCloud]);
 
-  const login = async () => {
-    if (!firebaseEnabled) return;
-    try { await (await client()).login(); } catch (e) { console.error("Login cancelado ou bloqueado", e); }
-  };
   const logout = async () => { if (firebaseEnabled) await (await client()).logout(); };
   const reset = () => update(s => ({ ...empty(), target: s.target }));
 
   return (
-    <StoreCtx.Provider value={{ state, ready, update, user, cloud: firebaseEnabled, syncing, login, logout, reset }}>
+    <StoreCtx.Provider value={{ state, ready, update, user, cloud: firebaseEnabled, syncing, authReady, auth: client, logout, reset }}>
       {children}
     </StoreCtx.Provider>
   );

@@ -20,12 +20,12 @@ Abra http://localhost:3000.
 
 Sem Firebase, o progresso (aulas concluídas e histórico de simulados) fica salvo no navegador de cada aparelho.
 
-## Ativar o Firebase (login com Google e progresso na nuvem)
+## Ativar o Firebase (cadastro, login e progresso na nuvem)
 
-Com o Firebase, o aluno entra com a conta Google e o progresso aparece igual no celular e no computador.
+Com o Firebase, cada aluno cria a própria conta em `/entrar` (nome, e-mail e senha, ou conta Google) e o progresso aparece igual no celular e no computador. A sessão fica salva no aparelho: depois do primeiro acesso a pessoa continua conectada, sem digitar e-mail de novo.
 
 1. Em https://console.firebase.google.com crie um projeto.
-2. **Authentication → Sign-in method**: ative **Google**.
+2. **Authentication → Sign-in method**: ative **E-mail/senha** e **Google**.
 3. **Authentication → Settings → Authorized domains**: adicione o domínio da Vercel (ex.: `rumo-a-farda.vercel.app`) e o seu domínio próprio, se tiver.
 4. **Firestore Database**: crie o banco (modo produção) e, na aba **Rules**, cole o conteúdo de `firestore.rules`.
 5. **Configurações do projeto → Seus apps → Web (</>)**: registre um app e copie as chaves.
@@ -42,7 +42,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID
 
 Para testar localmente, copie `.env.example` para `.env.local` e preencha.
 
-Cada aluno tem um documento em `users/{uid}` no Firestore. As regras só deixam cada pessoa ler e gravar o próprio progresso. Ao entrar pela primeira vez, o que já estava salvo no aparelho é juntado com a nuvem.
+Cada aluno tem um documento em `users/{uid}` no Firestore, com o perfil (`profile`: nome, e-mail, data de cadastro e último acesso) e o progresso. As regras só deixam cada pessoa ler e gravar o próprio progresso. Ao entrar pela primeira vez, o que já estava salvo no aparelho é juntado com a nuvem.
 
 ## Onde editar o conteúdo
 
