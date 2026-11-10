@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, type ReactNode } from "react";
 import { Icon } from "./Icons";
 import { useStore } from "@/lib/store";
 import { TARGETS } from "@/lib/catalog";
@@ -15,9 +15,24 @@ const NAV = [
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
+  const router = useRouter();
   const { state, user, cloud, syncing, authReady, logout } = useStore();
+  const isLogin = path === "/entrar";
+
+  // Acesso só com login: sem sessão, tudo leva para /entrar; já logado, /entrar leva ao conteúdo.
+  useEffect(() => {
+    if (!cloud || !authReady) return;
+    if (!user && !isLogin) router.replace(path === "/" ? "/entrar" : "/entrar?next=" + encodeURIComponent(path));
+    if (user && isLogin) {
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
+    }
+  }, [cloud, authReady, user, isLogin, path, router]);
+
+  const locked = cloud && (!authReady || (!user && !isLogin) || (user && isLogin));
+  if (locked) return <Splash />;
   // A tela de login é independente: sem menu lateral nem barra inferior.
-  if (path === "/entrar") return <main className="auth-page">{children}</main>;
+  if (isLogin) return <main className="auth-page">{children}</main>;
   const active = (h: string) => (h === "/" ? path === "/" : path.startsWith(h));
   const links = NAV.map(n => (
     <Link key={n.href} href={n.href} aria-current={active(n.href) ? "page" : undefined}>
@@ -40,15 +55,10 @@ export function Shell({ children }: { children: ReactNode }) {
               <>
                 <div className="row" style={{ gap: 8 }}>
                   {user.photoURL && <img src={user.photoURL} alt="" referrerPolicy="no-referrer" />}
-                  <Link href="/entrar" style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{user.displayName || user.email}</Link>
+                  <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{user.displayName || user.email}</span>
                 </div>
                 <span className="sync">{syncing ? "Sincronizando…" : "Progresso salvo na nuvem"}</span>
                 <button className="btn ghost" style={{ minHeight: 34, padding: "4px 8px" }} onClick={logout}>Sair</button>
-              </>
-            ) : authReady ? (
-              <>
-                <span>Crie sua conta para salvar o progresso no celular e no computador.</span>
-                <Link className="btn" href="/entrar">Entrar ou cadastrar</Link>
               </>
             ) : null
           ) : (
@@ -62,17 +72,29 @@ export function Shell({ children }: { children: ReactNode }) {
   );
 }
 
+function Splash() {
+  return (
+    <main className="auth-page" aria-busy="true">
+      <div className="auth-brand">
+        <span className="brand-mark" aria-hidden="true"><Icon.shield /></span>
+        <span className="brand-name">Rumo à Farda</span>
+      </div>
+    </main>
+  );
+}
+
 export function MobileTop({ title }: { title: string }) {
-  const { state, user, cloud, authReady } = useStore();
+  const { state, user, logout } = useStore();
   return (
     <div className="mtop">
       <div className="row" style={{ gap: 10 }}>
         <div className="brand-mark" aria-hidden="true"><Icon.shield size={18} /></div>
         <b style={{ fontFamily: "var(--font-display)" }}>{title}</b>
       </div>
-      {cloud && authReady && !user
-        ? <Link className="chip" href="/entrar">Entrar</Link>
-        : <span className="chip">{TARGETS[state.target].short}</span>}
+      <div className="row" style={{ gap: 6 }}>
+        <span className="chip">{TARGETS[state.target].short}</span>
+        {user && <button className="chip" style={{ border: 0, cursor: "pointer" }} onClick={logout}>Sair</button>}
+      </div>
     </div>
   );
 }

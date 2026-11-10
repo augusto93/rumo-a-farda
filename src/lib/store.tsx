@@ -8,6 +8,14 @@ const client = () => (clientP ??= import("./firebase-client"));
 import type { StudyState } from "./types";
 
 const KEY = "rumo-farda-v1";
+/** Último usuário logado: abre o app na hora, sem esperar o Firebase confirmar a sessão. */
+const USER_KEY = "rumo-farda-user";
+function loadUser(): CloudUser | null {
+  try { const raw = localStorage.getItem(USER_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
+}
+function saveUser(u: CloudUser | null) {
+  try { if (u) localStorage.setItem(USER_KEY, JSON.stringify(u)); else localStorage.removeItem(USER_KEY); } catch {}
+}
 const empty = (): StudyState => ({ done: {}, seen: {}, history: [], target: "pmerj", exam: null, updatedAt: 0 });
 
 function loadLocal(): StudyState {
@@ -38,6 +46,8 @@ type Ctx = {
   /** carregado o estado de login (evita piscar "Entrar" para quem já está logado) */
   authReady: boolean;
   auth: () => Promise<Client>;
+  /** relê nome/e-mail do usuário (ex.: depois do cadastro) */
+  refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
   reset: () => void;
 };
@@ -52,7 +62,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userRef = useRef<CloudUser | null>(null);
 
-  useEffect(() => { setState(loadLocal()); setReady(true); }, []);
+  useEffect(() => {
+    setState(loadLocal()); setReady(true);
+    if (!firebaseEnabled) return;
+    const cached = loadUser();
+    if (cached) { setUser(cached); userRef.current = cached; setAuthReady(true); }
+  }, []);
 
   const pushCloud = useCallback((s: StudyState) => {
     const u = userRef.current;
@@ -69,7 +84,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!firebaseEnabled) return;
     let off: (() => void) | undefined, alive = true;
     client().then(c => { if (!alive) return; off = c.watchUser(async u => {
-      setUser(u); userRef.current = u; setAuthReady(true);
+      setUser(u); userRef.current = u; setAuthReady(true); saveUser(u);
       if (!u) return;
       setSyncing(true);
       try {
@@ -95,11 +110,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, [pushCloud]);
 
-  const logout = async () => { if (firebaseEnabled) await (await client()).logout(); };
+  const refreshUser = useCallback(async () => {
+    if (!firebaseEnabled) return;
+    const u = (await client()).currentUser();
+    if (u) { setUser(u); userRef.current = u; saveUser(u); }
+  }, []);
+
+  /** Ao sair, apaga o progresso deste aparelho para não misturar com o próximo aluno. */
+  const logout = async () => {
+    if (!firebaseEnabled) return;
+    if (timer.current) clearTimeout(timer.current);
+    await (await client()).logout();
+    userRef.current = null; setUser(null); saveUser(null);
+    try { localStorage.removeItem(KEY); } catch {}
+    setState(empty());
+  };
   const reset = () => update(s => ({ ...empty(), target: s.target }));
 
   return (
-    <StoreCtx.Provider value={{ state, ready, update, user, cloud: firebaseEnabled, syncing, authReady, auth: client, logout, reset }}>
+    <StoreCtx.Provider value={{ state, ready, update, user, cloud: firebaseEnabled, syncing, authReady, auth: client, refreshUser, logout, reset }}>
       {children}
     </StoreCtx.Provider>
   );

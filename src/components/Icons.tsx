@@ -10,6 +10,5 @@ export const Icon = {
   right: () => <svg viewBox="0 0 24 24" {...p}><path d="m9 18 6-6-6-6" /></svg>,
   clock: () => <svg viewBox="0 0 24 24" width={18} height={18} {...p}><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9 2h6" /></svg>,
   shuffle: () => <svg viewBox="0 0 24 24" {...p}><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></svg>,
-  phone: () => <svg viewBox="0 0 24 24" {...p}><rect x="6" y="2" width="12" height="20" rx="2.5" /><path d="M11 18h2" /></svg>,
   shield: ({ size = 20 }: { size?: number }) => <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="#F4F8FA" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z" /><path d="m9 12 2 2 4-4" /></svg>
 };

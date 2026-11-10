@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Icon } from "@/components/Icons";
 
@@ -11,18 +10,18 @@ const LAST_EMAIL = "rumo-farda-email";
 function Frame({ children }: { children: ReactNode }) {
   return (
     <div className="auth-wrap">
-      <Link href="/" className="auth-brand" aria-label="Rumo à Farda, início">
+      <div className="auth-brand">
         <span className="brand-mark" aria-hidden="true"><Icon.shield /></span>
         <span className="brand-name">Rumo à Farda</span>
-      </Link>
+      </div>
       <section className="card auth-card">{children}</section>
     </div>
   );
 }
 
 export default function Entrar() {
-  const { cloud, user, authReady, auth, logout } = useStore();
-  const router = useRouter();
+  // Quem já está logado nem chega aqui: o Shell redireciona para o conteúdo.
+  const { cloud, auth, refreshUser } = useStore();
   const [mode, setMode] = useState<Mode>("entrar");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -45,7 +44,6 @@ export default function Entrar() {
     setBusy(false);
   };
   const remember = (e: string) => { try { localStorage.setItem(LAST_EMAIL, e); } catch {} };
-  const done = () => router.push("/");
 
   const submit = (ev: FormEvent) => {
     ev.preventDefault();
@@ -53,34 +51,21 @@ export default function Entrar() {
     if (mode === "cadastro") {
       if (name.trim().length < 2) return setErr("Informe seu nome.");
       if (pass.length < 6) return setErr("A senha precisa ter pelo menos 6 caracteres.");
-      run(async () => (await auth()).signUpEmail(name.trim(), e, pass), () => { remember(e); done(); });
+      run(async () => (await auth()).signUpEmail(name.trim(), e, pass), () => { remember(e); refreshUser(); });
     } else if (mode === "entrar") {
-      run(async () => (await auth()).loginEmail(e, pass), () => { remember(e); done(); });
+      run(async () => (await auth()).loginEmail(e, pass), () => remember(e));
     } else {
       run(async () => (await auth()).resetPassword(e), () => setMsg("Enviamos um link para redefinir a senha. Confira também o spam."));
     }
   };
-  const google = () => run(async () => (await auth()).loginGoogle(), done);
+  const google = () => run(async () => (await auth()).loginGoogle());
 
   if (!cloud) {
     return (
       <Frame>
         <h1>Login indisponível</h1>
         <p className="muted">O Firebase ainda não foi configurado.</p>
-        <Link className="btn" href="/">Voltar ao início</Link>
-      </Frame>
-    );
-  }
-
-  if (!authReady) return <Frame><p className="muted" style={{ margin: 0 }}>Carregando…</p></Frame>;
-
-  if (user) {
-    return (
-      <Frame>
-        <h1>{user.displayName || "Aluno"}</h1>
-        <p className="muted" style={{ margin: 0 }}>{user.email}</p>
-        <Link className="btn primary" href="/">Continuar estudando</Link>
-        <button className="btn ghost" onClick={logout}>Sair da conta</button>
+        <Link className="btn" href="/">Usar sem login</Link>
       </Frame>
     );
   }

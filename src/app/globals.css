@@ -208,9 +208,6 @@ a{color:var(--accent)}
 .hist{display:flex;flex-direction:column;gap:8px}
 .hist-row{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;font-size:.92rem}
 .empty{padding:22px;border:1.5px dashed var(--line);border-radius:var(--r);color:var(--ink-2);text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
-.install{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
-.install-ico{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);display:grid;place-items:center;color:var(--accent)}
-.install-ico svg{width:22px;height:22px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 /* conta / login */

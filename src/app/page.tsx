@@ -75,16 +75,6 @@ export default function Home() {
           })}
         </div>
       </section>
-
-      <section className="card install">
-        <div className="install-ico"><Icon.phone /></div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <h3>Instale como app no celular</h3>
-          <p className="muted" style={{ fontSize: ".95rem" }}>
-            No iPhone: <b>Compartilhar → Adicionar à Tela de Início</b>. No Android: <b>⋮ → Instalar app</b>. O ícone abre a plataforma em tela cheia, com a barra de navegação embaixo.
-          </p>
-        </div>
-      </section>
     </>
   );
 }

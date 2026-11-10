@@ -67,6 +67,8 @@ export const resetPassword = (email: string) => sendPasswordResetEmail(auth, ema
 
 export const logout = () => signOut(auth);
 
+export const currentUser = (): CloudUser | null => (auth.currentUser ? toCloud(auth.currentUser) : null);
+
 export const readProgress = async (uid: string) => {
   const snap = await getDoc(doc(db, "users", uid));
   return snap.exists() ? snap.data() : null;
